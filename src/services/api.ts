@@ -1,7 +1,16 @@
 import axios from 'axios';
 
+const getBaseURL = () => {
+  if (typeof window !== 'undefined') {
+    if (window.location.protocol === 'https:' || !process.env.NEXT_PUBLIC_API_URL) {
+      return '/api/v1';
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+};
+
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1',
+  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json'
   }
