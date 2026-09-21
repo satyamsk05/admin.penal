@@ -24,6 +24,7 @@ export default function UsersManagementPage() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'ALL' | 'ACTIVE' | 'BANNED'>('ALL');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     try {
@@ -45,16 +46,30 @@ export default function UsersManagementPage() {
 
   useEffect(() => {
     fetchUsers();
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('search');
+      if (q) setSearch(q);
+    }
   }, []);
 
   const toggleBan = async (userId: string, currentBanStatus: boolean) => {
+    const action = currentBanStatus ? 'UNBAN' : 'BAN';
+    if (!window.confirm(`Are you sure you want to ${action} user account ${userId}?`)) {
+      return;
+    }
     try {
+      setProcessingId(userId);
       const res = await userService.toggleBan(userId, !currentBanStatus);
       if (res.success) {
-        fetchUsers();
+        await fetchUsers();
+      } else {
+        alert(res.message || 'Action failed');
       }
     } catch (err: any) {
       alert(`Action failed: ${err.message}`);
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -217,22 +232,22 @@ export default function UsersManagementPage() {
 
                       <td className="px-4 py-3 text-right">
                         <button
+                          disabled={processingId === u.id}
                           onClick={() => toggleBan(u.id, u.isBanned)}
-                          className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition ${
+                          className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition disabled:opacity-50 ${
                             u.isBanned
                               ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
                               : 'border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-400'
                           }`}
                         >
-                          {u.isBanned ? (
-                            <>
-                              <UserCheck className="h-3 w-3" /> Unban
-                            </>
+                          {processingId === u.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : u.isBanned ? (
+                            <UserCheck className="h-3 w-3" />
                           ) : (
-                            <>
-                              <UserX className="h-3 w-3" /> Ban Account
-                            </>
+                            <UserX className="h-3 w-3" />
                           )}
+                          {u.isBanned ? 'Unban' : 'Ban Account'}
                         </button>
                       </td>
 

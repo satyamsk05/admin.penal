@@ -19,6 +19,8 @@ export default function DepositsQueuePage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
 
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
   const fetchDeposits = async () => {
     try {
       setLoading(true);
@@ -41,29 +43,41 @@ export default function DepositsQueuePage() {
     fetchDeposits();
   }, []);
 
-  const handleApprove = async (depositId: string) => {
+  const handleApprove = async (depositId: string, amount: number) => {
+    if (!window.confirm(`Are you sure you want to APPROVE deposit of ₹${amount.toFixed(2)} (${depositId}) and credit player wallet?`)) {
+      return;
+    }
     try {
+      setProcessingId(depositId);
       const res = await paymentService.approveDeposit(depositId);
       if (res.success) {
-        fetchDeposits();
+        await fetchDeposits();
       } else {
-        alert(res.message);
+        alert(res.message || 'Approval failed');
       }
     } catch (err: any) {
       alert(`Approval failed: ${err.message}`);
+    } finally {
+      setProcessingId(null);
     }
   };
 
   const handleReject = async (depositId: string) => {
+    if (!window.confirm(`Are you sure you want to REJECT deposit (${depositId})?`)) {
+      return;
+    }
     try {
+      setProcessingId(depositId);
       const res = await paymentService.rejectDeposit(depositId);
       if (res.success) {
-        fetchDeposits();
+        await fetchDeposits();
       } else {
-        alert(res.message);
+        alert(res.message || 'Rejection failed');
       }
     } catch (err: any) {
       alert(`Rejection failed: ${err.message}`);
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -203,16 +217,28 @@ export default function DepositsQueuePage() {
                       {d.status === 'PENDING' && (
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => handleApprove(d.depositId)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition"
+                            disabled={processingId === d.depositId}
+                            onClick={() => handleApprove(d.depositId, d.amountRupees)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition disabled:opacity-50"
                           >
-                            <CheckCircle2 className="h-3.5 w-3.5" /> Approve & Credit
+                            {processingId === d.depositId ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            )}
+                            Approve & Credit
                           </button>
                           <button
+                            disabled={processingId === d.depositId}
                             onClick={() => handleReject(d.depositId)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-400 hover:bg-rose-500/20 transition"
+                            className="inline-flex items-center gap-1 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-400 hover:bg-rose-500/20 transition disabled:opacity-50"
                           >
-                            <XCircle className="h-3.5 w-3.5" /> Reject
+                            {processingId === d.depositId ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <XCircle className="h-3.5 w-3.5" />
+                            )}
+                            Reject
                           </button>
                         </div>
                       )}

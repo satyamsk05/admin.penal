@@ -17,6 +17,7 @@ import {
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   if (pathname === '/login') return null;
 
@@ -26,11 +27,17 @@ export function Navbar() {
     router.push('/login');
   };
 
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      router.push(`/users?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
   const navItems = [
     { name: 'Overview', href: '/', icon: BarChart3 },
     { name: 'Users', href: '/users', icon: Users },
-    { name: 'Deposits', href: '/payments/deposits', icon: ArrowDownLeft, badge: '2 Pending' },
-    { name: 'Withdrawals', href: '/payments/withdrawals', icon: ArrowUpRight, badge: '1 Pending' },
+    { name: 'Deposits', href: '/payments/deposits', icon: ArrowDownLeft },
+    { name: 'Withdrawals', href: '/payments/withdrawals', icon: ArrowUpRight },
     { name: 'Reports', href: '/reports', icon: FileSpreadsheet },
   ];
 
@@ -66,7 +73,10 @@ export function Navbar() {
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
               <input
                 type="text"
-                placeholder="Search user, UTR, UPI..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                placeholder="Search user, ID (Enter to search)..."
                 className="w-full rounded-lg border border-zinc-800 bg-zinc-900/60 py-1.5 pl-9 pr-8 text-xs text-zinc-200 placeholder-zinc-500 focus:border-zinc-700 focus:outline-none focus:ring-1 focus:ring-zinc-700 transition"
               />
               <kbd className="absolute right-2.5 top-2 flex items-center gap-0.5 rounded border border-zinc-800 bg-zinc-900 px-1.5 py-0.5 text-[10px] text-zinc-500 font-mono">
@@ -101,12 +111,6 @@ export function Navbar() {
               >
                 <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'}`} />
                 <span>{item.name}</span>
-
-                {item.badge && (
-                  <span className="ml-1 rounded-full bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400">
-                    {item.badge}
-                  </span>
-                )}
               </Link>
             );
           })}

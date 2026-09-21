@@ -19,6 +19,8 @@ export default function WithdrawalsQueuePage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
 
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
   const fetchWithdrawals = async () => {
     try {
       setLoading(true);
@@ -41,29 +43,41 @@ export default function WithdrawalsQueuePage() {
     fetchWithdrawals();
   }, []);
 
-  const handleApprove = async (withdrawalId: string) => {
+  const handleApprove = async (withdrawalId: string, amount: number, upiId: string) => {
+    if (!window.confirm(`Are you sure you want to APPROVE withdrawal of ₹${amount.toFixed(2)} to ${upiId} (${withdrawalId})?`)) {
+      return;
+    }
     try {
+      setProcessingId(withdrawalId);
       const res = await paymentService.approveWithdrawal(withdrawalId);
       if (res.success) {
-        fetchWithdrawals();
+        await fetchWithdrawals();
       } else {
-        alert(res.message);
+        alert(res.message || 'Approval failed');
       }
     } catch (err: any) {
       alert(`Approval failed: ${err.message}`);
+    } finally {
+      setProcessingId(null);
     }
   };
 
   const handleReject = async (withdrawalId: string) => {
+    if (!window.confirm(`Are you sure you want to REJECT withdrawal (${withdrawalId}) and refund user wallet?`)) {
+      return;
+    }
     try {
+      setProcessingId(withdrawalId);
       const res = await paymentService.rejectWithdrawal(withdrawalId);
       if (res.success) {
-        fetchWithdrawals();
+        await fetchWithdrawals();
       } else {
-        alert(res.message);
+        alert(res.message || 'Rejection failed');
       }
     } catch (err: any) {
       alert(`Rejection failed: ${err.message}`);
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -201,16 +215,28 @@ export default function WithdrawalsQueuePage() {
                       {w.status === 'PENDING' && (
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => handleApprove(w.withdrawalId)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition"
+                            disabled={processingId === w.withdrawalId}
+                            onClick={() => handleApprove(w.withdrawalId, w.amountRupees, w.upiId)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition disabled:opacity-50"
                           >
-                            <CheckCircle2 className="h-3.5 w-3.5" /> Approve & Pay
+                            {processingId === w.withdrawalId ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            )}
+                            Approve & Pay
                           </button>
                           <button
+                            disabled={processingId === w.withdrawalId}
                             onClick={() => handleReject(w.withdrawalId)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-400 hover:bg-rose-500/20 transition"
+                            className="inline-flex items-center gap-1 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-400 hover:bg-rose-500/20 transition disabled:opacity-50"
                           >
-                            <XCircle className="h-3.5 w-3.5" /> Reject & Refund
+                            {processingId === w.withdrawalId ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <XCircle className="h-3.5 w-3.5" />
+                            )}
+                            Reject & Refund
                           </button>
                         </div>
                       )}
