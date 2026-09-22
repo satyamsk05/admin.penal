@@ -22,16 +22,6 @@ module.exports = {
           textSecondary: '#e1e1e1',
           textInverse: '#8c8c8c',
         },
-        dub: {
-          bg: '#000000',
-          card: '#212123',
-          surface: '#212123',
-          border: 'rgba(255, 255, 255, 0.08)',
-          muted: '#a6a6a6',
-          dim: '#8c8c8c',
-          brand: '#2988ff',
-          brandHover: '#1f73dc',
-        },
       },
       borderRadius: {
         xs: '3px',
