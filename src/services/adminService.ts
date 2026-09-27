@@ -60,6 +60,8 @@ export interface UserDetailsResponse {
   recentBets: Array<{
     id: string;
     round_id: string;
+    game_type?: string;
+    tier_name?: string;
     selected_option: string;
     color?: string;
     bet_amount?: string | number;
@@ -347,6 +349,41 @@ export const adminService = {
 
   toggleAnnouncementStatus: async (id: string, isActive: boolean) => {
     const res = await api.patch(`/admin/system/announcements/${id}/status`, { isActive });
+    return res.data;
+  },
+
+  sendPushNotification: async (data: { title: string; body: string; targetAudience?: string; userId?: string }) => {
+    const res = await api.post('/admin/system/notifications/push', data);
+    return res.data;
+  },
+
+  // Promotions & App Carousel
+  getPromotions: async () => {
+    const res = await api.get('/admin/promotions');
+    return res.data;
+  },
+
+  createPromotion: async (data: {
+    title: string;
+    subtitle: string;
+    badgeText?: string;
+    ctaText?: string;
+    targetRoute?: string;
+    gradientStart?: string;
+    gradientEnd?: string;
+    displayOrder?: number;
+  }) => {
+    const res = await api.post('/admin/promotions', data);
+    return res.data;
+  },
+
+  togglePromotionStatus: async (id: string, isActive: boolean) => {
+    const res = await api.patch(`/admin/promotions/${id}/status`, { isActive });
+    return res.data;
+  },
+
+  deletePromotion: async (id: string) => {
+    const res = await api.delete(`/admin/promotions/${id}`);
     return res.data;
   },
 
