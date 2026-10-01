@@ -27,12 +27,12 @@ export default function AdminLoginPage() {
       if (res.data?.success && res.data?.data?.token) {
         localStorage.setItem('adminToken', res.data.data.token);
         localStorage.setItem('adminUser', res.data.data.username);
-        window.location.href = '/';
+        router.push('/');
       } else {
         setError(res.data?.message || 'Login failed');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Invalid admin credentials');
+      setError(err?.message || err?.response?.data?.message || 'Invalid admin credentials');
     } finally {
       setLoading(false);
     }
@@ -41,7 +41,7 @@ export default function AdminLoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#000000] px-4 font-sans text-white selection:bg-white/20 selection:text-white">
       <Card className="w-full max-w-[380px] space-y-6 p-7 border border-white/[0.08] bg-[#0c0c0e]">
-        
+
         {/* Brand Header */}
         <div className="text-center">
           <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-lg bg-white text-black font-black text-xs shadow-sm mb-3">
@@ -103,7 +103,7 @@ export default function AdminLoginPage() {
 
         <div className="flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 pt-3 border-t border-white/[0.06]">
           <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" strokeWidth={1.75} />
-          <span>Encrypted 256-bit Session</span>
+          <span>Protected admin session</span>
         </div>
 
       </Card>
